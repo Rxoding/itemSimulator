@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +5,75 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model Items {
+  itemCode Int @id @default(autoincrement()) @map("itemCode")
+  itemName String @map("itemName")
+  health Int @map("health")
+  power Int @map("power")
+  itemPrice Int @map("itemPrice")
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  characterInventory CharacterInventory[]
+  characterItem CharacterItem[]
+
+  @@map("Items")
+}
+
+model Users {
+  userCode Int @id @default(autoincrement()) @map("userCode")
+  userId String @unique @map("userId")
+  password String  @map("password")
+  name String @map("name")
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  character Characters[] // characters 테이블과 1:N
+
+  @@map("Users")
+}
+
+model Characters {
+  characterCode Int @id @default(autoincrement()) @map("characterCode")
+  userCode Int @map("userCode") // 외래키
+  characterName String @unique @map("characterName")
+  health Int @default(500) @map("health")
+  power Int @default(100) @map("power")
+  money Int @default(10000) @map("money")
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  characterInventory CharacterInventory[]
+  characterItem CharacterItem[]
+  user Users @relation(fields: [userCode], references: [userCode], onDelete: Cascade)
+
+  @@map("Characters")
+}
+
+model CharacterInventory {
+  chrInvCode Int @id @default(autoincrement()) @map("chrInvCode")
+  characterCode Int @map("characterCode") // 외래키
+  itemCode Int @map("itemCode") // 외래키
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  character Characters @relation(fields: [characterCode], references: [characterCode], onDelete: Cascade)
+  item Items @relation(fields: [itemCode], references: [itemCode], onDelete: Cascade)
+
+  @@map("CharacterInventory")
+}
+
+model CharacterItem {
+  chrItemCode Int @id @default(autoincrement()) @map("chrItemCode")
+  characterCode Int @map("characterCode") // 외래키
+  itemCode Int @map("itemCode") // 외래키
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  character Characters @relation(fields: [characterCode], references: [characterCode], onDelete: Cascade)
+  item Items @relation(fields: [itemCode], references: [itemCode], onDelete: Cascade)
+
+  @@map("CharacterItem")
 }
