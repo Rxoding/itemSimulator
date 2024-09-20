@@ -1,10 +1,13 @@
 import express from 'express';
-import bcrpyt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import { prisma } from '../utils/prisma/index.js';
 import { Prisma } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 
+dotenv.config();
 const router = express.Router();
+const jwtSecretKey = process.env.SESSION_SECRET_KEY;
 
 // 회원가입
 router.post('/sign-up', async (req, res, next) => {
@@ -19,8 +22,8 @@ router.post('/sign-up', async (req, res, next) => {
       return res.status(409).json({ message: '이미 존재하는 아이디입니다.' });
     }
 
-    // bcrpyt 사용해 암호화
-    const hashedPassword = await bcrpyt.hash(password, 10);
+    // bcrypt 사용해 암호화
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // id = 영어소문자 + 숫자
     const correctId = /^[a-z0-9]+$/;
@@ -83,7 +86,7 @@ router.post('/sign-in', async (req, res, next) => {
     if (!user)
       return res.status(401).json({ message: '존재하지 않는 아이디입니다.' });
     // 비번 틀림
-    if (!(await bcrpyt.compare(password, user.password)))
+    if (!(await bcrypt.compare(password, user.password)))
       return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
 
     // 로그인 성공시 userId를 바탕으로 토큰생성
@@ -91,7 +94,8 @@ router.post('/sign-in', async (req, res, next) => {
       {
         userCode: user.userCode,
       },
-      'custom-secret-key'
+      // process.env.SESSION_SECRET_KEY
+      jwtSecretKey
     );
 
     // authotization 쿠키에 Berer 토큰 형식으로 JWT를 저장
